@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import IconHelp from '@/components/icons/IconHelp.vue';
+import isValidLuhn from '@/utils/isVaildLuhn';
+import {onInputNumeric, onKeypressNumeric, onPasteNumeric} from '@/utils/numericInput'
 import { ref, reactive } from 'vue';
 
 const isHelpVisible = ref(false);
@@ -16,35 +18,6 @@ const form = reactive({
 const errors = reactive({
   sin: '',
 });
-
-const isValidLuhn = (numberString: string) => {
-  if (!/^\d{9}$/.test(numberString)) {
-    return false; // The input must be a 9-digit string consisting only of digits
-  }
-
-  let sum: number = 0;
-  const digits: number[] = numberString.split('').map(Number);
-
-  // Starting from the right, double every second digit
-  for (let i: number = 0; i < digits.length; i++) {
-    let digit: number = digits[digits.length - 1 - i]!;
-
-    if (i % 2 === 1) {
-      digit *= 2;
-      // If doubling the digit results in a number greater than 9, calculate sum of digits.
-      // Since it will never be over 18, for any n >= 10 and < 19 we can calculate n-10(this gives second digit) + 1 (first digit)
-      if (digit > 9) {
-        digit = digit - 10 + 1;
-      }
-    }
-
-    sum += digit;
-  }
-
-  // If the total sum is a multiple of 10, the number is valid
-  return sum % 10 === 0;
-}
-
 
 const validateField = (field: string) => {  
   
@@ -83,11 +56,14 @@ const isValidField = (field: string) => {
           <input 
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
             id="sin" 
-            type="number"
-            inputmode="numeric"
+            type="text"
+            
+            @input="(e: Event) => {onInputNumeric(e); validateField('sin')}"
+            @keypress="onKeypressNumeric"
+            @paste="onPasteNumeric"
+
             placeholder="000 000 000"
             v-model="form.sin"
-            @input="validateField('sin')"
             v-bind:class = "(errors.sin)?'border-red-500':''"
           >
           <a 
